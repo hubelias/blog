@@ -9,7 +9,7 @@ export const SITE_METADATA = {
     description: 'My thoughts on building software',
     language: 'en-us',
     theme: 'system', // Options: system, light, dark, Does not work yet
-    siteUrl: 'https://github.com/hubelias/blog', // TODO
+    siteUrl: 'https://www.hubelias.dev',
     siteRepo: 'https://github.com/hubelias/blog',
     siteLogo: '/static/images/logo.png',
     // socialBanner: '/static/images/twitter-card.png',
