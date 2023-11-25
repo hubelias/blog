@@ -10,7 +10,7 @@ import {SITE_METADATA} from "./src/consts.ts";
 export default defineConfig({
     prefetch: true,
     site: SITE_METADATA.siteUrl,
-    output: 'server',
+    output: 'hybrid',
     adapter: vercel({
         webAnalytics: {
             enabled: true
