@@ -1,0 +1,191 @@
+---
+title: Tidy first?
+date: '2023-11-26'
+tags: ['oreilly']
+draft: true
+summary: Summary of "Tidy first?" by Kent Beck. The question mark in the title isn't accidental.
+---
+
+# Summary of "Tidy first?" by Kent Beck
+
+The latest book of [the inventor of test-driven development](https://en.wikipedia.org/wiki/Kent_Beck) 
+is the first one in the upcoming cycle of 3 books about software design. 
+The cycle is supposed to help us, the readers, answer the question
+which is to this day controversial among software engineers: "When to do the design?".
+
+Kent draws a line between a "speculative design" - do the design first - and a "reactive design" - design as little
+as possible, focus on the features and the design will emerge. 
+
+On the system scale, the speculative design would be known as a big design up front.
+Let the most skilled people, architects, do the design first, and then the less skilled developers can just implement it. 
+The alternative would be the "evolutionary design", the idea that good design will emerge when we start implementing the features. 
+Taken to the extreme, it will have the effects eloquently [described by Martin Fowler](https://www.martinfowler.com/articles/designDead.html):
+
+> In its common usage, evolutionary design is a disaster. The design ends up being the aggregation of a bunch of ad-hoc 
+> tactical decisions, each of which makes the code harder to alter. In many ways you might argue this is no design, 
+> certainly it usually leads to a poor design.
+
+Kent's answer to the question "when?" is unsurprisingly "somewhere in the middle" of the speculative/reactive spectrum.
+And the planned cycle of books is supposed to help us navigate where exactly. "Tidy first?" focuses on the smallest scale,
+individual contributor, and the minutes to hours of their work. Two other books will address this question on the higher
+levels: collaboration within a team of developers within days or weeks, and finally collaboration between engineers and
+business people building a product within weeks, months and years.
+
+So let's jump into the details, the book has 3 main sections, that answer the following questions:
+"what?", "when?" and "why?".
+
+## What? A catalog of tidyings.
+
+Kent presents a collection of 15 tidyings - small-scale refactorings - changes of code structure without changing the observable behavior.
+For an experienced designer, it's something they would probably already know and use. Nevertheless, it's worth going over the presented tidyings 
+to consolidate your knowledge. The descriptions of the tidying also give some rationale behind them
+that can be used as an argument during a code review.
+
+To give you a foretaste of what kind of tidyings we're talking about, I'll present two: "guard clauses" 
+and "new interface, old implementation".
+
+### Guard clauses
+
+It's easiest to show with an example. The following code calculates a discount if it's applicable:
+
+```kotlin
+fun calculateDiscount(): Double {
+    if (condition) {
+        /* multiple lines of calculation logic */
+        return calculatedDiscount
+    } else {
+        return 0.0
+    }
+}
+```
+
+It should be converted to:
+
+```kotlin
+fun calculateDiscount(): Double {
+    if (!condition) {
+        return 0.0
+    }
+    
+    /* multiple lines of calculation logic */
+    return calculatedDiscount
+}
+```
+
+This is an example that I found interesting because it reminded me of a discussion I had with one of my peers
+when reviewing a pull request recently. If only I had read this book earlier, I could have appealed to Kent's authority
+in my comment. But putting authority aside, Kent's arguments for this change is pretty simple, and I second that 100%:
+
+> Code with guard clauses is easier to analyze because the preconditions are explicit.
+
+### New interface, old implementation
+
+This is a nice tidying I had an opportunity to use recently when implementing a new feature in the product I work on.
+Without going into irrelevant details, I knew we had to support several serialization methods for the same data. 
+Ideal candidate for polymorphism with a single interface and multiple implementations, isn't it?
+
+But before creating a second implementation, I applied this tidying. I've created a new class, with the API I wanted for 
+the new interface, and delegated calls to the old implementation. This was a single step, very quick and risk-free.
+Now I could either immediately create the second implementation, or clean all the remaining usages of the old interface
+and ditch it completely.
+
+Importantly, it's this small tidying step, that opened both these possibilities to me.
+
+## When? Tidy first, or maybe never?
+
+For the question "when to tidy?" we can choose from the following options:
+* never
+* later - some day in the future
+* after - immediately after implementing a behavior change
+* first - before implementing a behavior change
+
+The answer to this question is obviously "it depends", but Kent gives us some useful heuristics.
+
+We should always tidy first, if we know that: 
+`cost of tidying + cost of change after tidying < cost of change without tidying`
+Of course, we will never know for sure, so we need to trust our guts here. On the other hand, when we're sure we will never touch specific code
+again and we will not learn anything from tidying, let's not tidy at all.
+
+When we consider choosing between tidying after or later, it's important to understand whether postponing tidying for later
+will make it much more expensive. It might be the case when we forget what we want to tidy after some time. In that case, it's 
+better to tidy directly after implementing behavior change.
+
+Anyway, tidying first is usually the most appropriate choice, but we should avoid tidying just for the sake of tidying.
+Still, we must consider our well-being beyond the cold ROI calculation - the joy that comes from tidying cannot be neglected.
+
+### Bonus advice: tidying vs code review
+
+One additional piece of advice I remembered from this part of the book is the recommendation to separate behavior changes from 
+structural changes when putting our code to review. Kent described the dynamics of small vs big reviews I've (frustratingly) experienced
+multiple times during my career. Small PRs are a burden to create, generate noise for reviewers and effectively slow you down. 
+Big PRs are harder to review and slow reviewers down, effectively slowing you down. If we create a separate PR for our tidying,
+then it's easier to review as it's supposed to not change the behavior. Also, a separate PR exclusively for behavior changes, it's easier to review
+due to less noise. So if we're working in an environment that has a code review process in place, we can make it more effective this way.
+
+On the side, Kent promised to provide some alternative solutions for the PR dynamics in further books of the series, 
+I have a feeling it might be [trunk-based development](https://trunkbaseddevelopment.com/), but we'll see. 
+
+## Why? Economics of tidying.
+
+For me, it was the most interesting and novel part of the book. Kent draws an analogy between tidying (or to put it broadly - design) 
+and investments (as in investment finance). Time spent on tidying is analogous to money spent. Feature added
+to the software (behavior change) is analogous to money earned.
+
+With the above way of looking at the problem, and an assumption that "a dollar today > a dollar tomorrow", the investment
+in solely structural changes seems irrational. Especially, if we consider an important aspect of both software and finance, which
+is uncertainty. The investment made in the design today might pay off tomorrow, but it will be irrelevant if your company goes
+down in the meantime.
+
+For me, as an avid code cleaner, this conclusion is devastating. But fortunately, there's hope. The first argument for tidying 
+was already mentioned. If the ROI is certain and immediate (with tidying the behavior change will be implemented faster) then we should tidy.
+For the second argument, we need to understand the concept of options (yes, options like the ones you receive when joining a startup).
+Kent describes the concept of options vividly:
+
+>If you haven’t encountered financial options before, here is my quick primer.
+>
+>Start out with a thing with a price. A potato for a dollar. I have a dollar. You have a potato. I give you the dollar. You give me the potato. Now I have a potato, but I don’t have the dollar. You have the dollar, but you don’t have the potato anymore.
+>
+>Maybe I don’t want the potato now; I want it tomorrow. I’m sure will I want it tomorrow. I can give you a dollar today in return for your promise of a potato tomorrow. Tomorrow you deliver the potato, and we’re both happy. I’ll give you a little less than a dollar today, because of the time value of money.
+>
+>What if I’m not sure if I want the potato tomorrow? I might have a picnic if the weather is good, in which case I’ll make potato salad. If the weather is bad, though, I don’t want to have bought a potato that will go to waste. In this case I can buy your promise of a potato tomorrow for a dollar tomorrow, but I might not hold you to that promise.
+
+So an option is a promise. I might buy something from you for a given price, and you promise to have it available for me. Such
+an option has value in itself. That's why options cost money. Getting back to the world of software design, it's good to have
+an option to quickly implement a behavioral change should a market opportunity occur. The time window of a market opportunity can be short. 
+Good design makes a product more adaptable to the changing environment. And the more volatile the environment is, the more valuable
+are the options that come from the good design.
+
+I must admit that I enjoyed this part of the book very much. After the lecture, I will probably tidy a little less now than I used to. 
+Or, to put it differently, I'll give a little bit more attention to assess if I should follow my instinct considering the broader picture. 
+As the scope of your responsibility grows and you start to be responsible not only for your work but also for the work of others, 
+the stakes get even higher, but it makes the dilemmas even more interesting.
+
+### Extra takes to remember.
+
+Just a couple of last points from this part of the book I want to note for myself in the future:
+
+* Structure changes are usually reversible, behavior changes usually aren't. That's why we should be more careful with behavior changes,
+ including analysis, design, code review.
+
+* Constantine's equivalence: ```cost of software ~= cost of change ~= cost of big changes ~= cost of coupling```, a nice explanation is provided in the book,
+ I won't spoil everything here ;)
+
+* Coupling is inevitable. It always exists in relation to a specific type of change. For one type of change, modules can be coupled, 
+ while for another type of change, they might be decoupled. Decoupling in the context of one change can increase the coupling in the context
+ of another change. We should minimize coupling for the changes that have the highest probability of occurring.
+
+* Cohesion - keep coupled things together. Be careful, as your information on understanding can be incomplete.
+
+## Links to the book:
+
+* [O'Reilly learning platform](https://www.oreilly.com/library/view/tidy-first/9781098151232/)
+* [ebookpoint](https://ebookpoint.pl/ksiazki/tidy-first-kent-beck,e_3oxl.htm)
+* [goodreads](https://www.goodreads.com/book/show/171691901-tidy-first)
+
+
+
+
+
+
+
+
